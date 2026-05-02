@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MetricBar } from "@/components/MetricBar";
+import { SparklineChart } from "@/components/SparklineChart";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useBots, type CpuCores, type EnvVar, type RamTier } from "@/context/BotsContext";
 import { useColors } from "@/hooks/useColors";
@@ -366,14 +367,90 @@ export default function BotDetailScreen() {
         {/* RESOURCES TAB */}
         {activeTab === "resources" && (
           <>
+            {/* RAM Sparkline */}
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Live Metrics</Text>
-              <MetricBar label="RAM Usage" value={bot.ramUsagePercent} showPercent />
-              <MetricBar label="CPU Usage" value={bot.cpuUsagePercent} showPercent />
+              <View style={styles.chartHeader}>
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.foreground }]}>RAM Usage</Text>
+                  <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                    Allocated: {formatBytes(bot.ramMb)} · Last 60s
+                  </Text>
+                </View>
+                <View style={[styles.liveChip, { backgroundColor: colors.success + "22" }]}>
+                  <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+                  <Text style={[styles.liveText, { color: colors.success }]}>LIVE</Text>
+                </View>
+              </View>
+              <SparklineChart
+                data={bot.ramHistory ?? []}
+                color={colors.primary}
+                height={72}
+                label="RAM"
+                current={bot.ramUsagePercent}
+                showGradient
+              />
+              <View style={styles.metricsRow}>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>{formatBytes(bot.ramMb)}</Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>Allocated</Text>
+                </View>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>
+                    {formatBytes(Math.round((bot.ramUsagePercent / 100) * bot.ramMb))}
+                  </Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>Used</Text>
+                </View>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>
+                    {formatBytes(Math.round(((100 - bot.ramUsagePercent) / 100) * bot.ramMb))}
+                  </Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>Free</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* CPU Sparkline */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.chartHeader}>
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.foreground }]}>CPU Usage</Text>
+                  <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                    {bot.cpuCores} core{bot.cpuCores > 1 ? "s" : ""} · Last 60s
+                  </Text>
+                </View>
+                <View style={[styles.liveChip, { backgroundColor: colors.success + "22" }]}>
+                  <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+                  <Text style={[styles.liveText, { color: colors.success }]}>LIVE</Text>
+                </View>
+              </View>
+              <SparklineChart
+                data={bot.cpuHistory ?? []}
+                color="#00b0f4"
+                height={72}
+                label="CPU"
+                current={bot.cpuUsagePercent}
+                showGradient
+              />
+              <View style={styles.metricsRow}>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>{bot.cpuCores}x</Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>Cores</Text>
+                </View>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>{Math.round(bot.cpuUsagePercent)}%</Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>In Use</Text>
+                </View>
+                <View style={[styles.metricPill, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metricPillVal, { color: colors.foreground }]}>{Math.round(100 - bot.cpuUsagePercent)}%</Text>
+                  <Text style={[styles.metricPillLbl, { color: colors.mutedForeground }]}>Idle</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Network & Storage</Text>
               <View style={styles.metricsGrid}>
                 {[
-                  { label: "RAM Alloc", value: formatBytes(bot.ramMb) },
-                  { label: "CPU Cores", value: `${bot.cpuCores}x` },
                   { label: "Network In", value: `${bot.networkInMb} MB` },
                   { label: "Network Out", value: `${bot.networkOutMb} MB` },
                   { label: "Storage", value: formatBytes(bot.storageMb) },
@@ -902,5 +979,13 @@ const styles = StyleSheet.create({
   cmdBar: { height: "100%", borderRadius: 4 },
   cmdCount: { width: 30, fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "right" },
   emptyText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 12 },
+  chartHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  liveChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  liveText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  metricsRow: { flexDirection: "row", gap: 8 },
+  metricPill: { flex: 1, padding: 10, borderRadius: 10, alignItems: "center", gap: 2 },
+  metricPillVal: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  metricPillLbl: { fontSize: 10, fontFamily: "Inter_400Regular" },
   surface: {},
 });

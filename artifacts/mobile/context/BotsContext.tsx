@@ -81,6 +81,8 @@ export interface Bot {
   cronJobs: CronJob[];
   ramUsagePercent: number;
   cpuUsagePercent: number;
+  ramHistory: number[];
+  cpuHistory: number[];
   networkInMb: number;
   networkOutMb: number;
   commandCount: number;
@@ -176,6 +178,8 @@ const DEMO_BOTS: Bot[] = [
     ],
     ramUsagePercent: 62,
     cpuUsagePercent: 28,
+    ramHistory: Array.from({ length: 30 }, (_, i) => Math.max(10, Math.min(95, 55 + Math.sin(i * 0.4) * 15 + (Math.random() - 0.5) * 8))),
+    cpuHistory: Array.from({ length: 30 }, (_, i) => Math.max(0, Math.min(100, 22 + Math.sin(i * 0.6) * 12 + (Math.random() - 0.5) * 10))),
     networkInMb: 145,
     networkOutMb: 89,
     commandCount: 1284,
@@ -218,6 +222,8 @@ const DEMO_BOTS: Bot[] = [
     cronJobs: [],
     ramUsagePercent: 0,
     cpuUsagePercent: 0,
+    ramHistory: Array.from({ length: 30 }, () => 0),
+    cpuHistory: Array.from({ length: 30 }, () => 0),
     networkInMb: 12,
     networkOutMb: 8,
     commandCount: 342,
@@ -270,6 +276,8 @@ const DEMO_BOTS: Bot[] = [
     ],
     ramUsagePercent: 45,
     cpuUsagePercent: 18,
+    ramHistory: Array.from({ length: 30 }, (_, i) => Math.max(10, Math.min(95, 40 + Math.sin(i * 0.35) * 10 + (Math.random() - 0.5) * 6))),
+    cpuHistory: Array.from({ length: 30 }, (_, i) => Math.max(0, Math.min(100, 15 + Math.cos(i * 0.5) * 8 + (Math.random() - 0.5) * 6))),
     networkInMb: 341,
     networkOutMb: 220,
     commandCount: 8921,
@@ -308,17 +316,21 @@ export function BotsProvider({ children }: { children: React.ReactNode }) {
       setBots((prev) =>
         prev.map((bot) => {
           if (bot.status === "online" || bot.status === "idle") {
+            const newRam = Math.max(10, Math.min(95, bot.ramUsagePercent + (Math.random() - 0.5) * 4));
+            const newCpu = Math.max(0, Math.min(100, bot.cpuUsagePercent + (Math.random() - 0.5) * 8));
             return {
               ...bot,
               uptimeSeconds: bot.uptimeSeconds + 5,
-              ramUsagePercent: Math.max(10, Math.min(95, bot.ramUsagePercent + (Math.random() - 0.5) * 4)),
-              cpuUsagePercent: Math.max(0, Math.min(100, bot.cpuUsagePercent + (Math.random() - 0.5) * 8)),
+              ramUsagePercent: newRam,
+              cpuUsagePercent: newCpu,
+              ramHistory: [...(bot.ramHistory ?? []).slice(-59), newRam],
+              cpuHistory: [...(bot.cpuHistory ?? []).slice(-59), newCpu],
             };
           }
           return bot;
         })
       );
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
