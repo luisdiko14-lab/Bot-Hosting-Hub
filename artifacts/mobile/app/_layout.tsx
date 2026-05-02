@@ -33,6 +33,10 @@ function RootLayoutNav() {
         name="bot/[id]"
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="bot/file-editor"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
     </Stack>
   );
 }

@@ -26,6 +26,7 @@ export interface BotFile {
   size: number;
   type: "file" | "folder";
   lastModified: string;
+  content?: string;
 }
 
 export interface LogEntry {
@@ -95,6 +96,7 @@ export interface Bot {
   proxyEnabled: boolean;
   bandwidthGb: number;
   port: number;
+  subdomain: string;
 }
 
 interface BotsContextType {
@@ -192,6 +194,7 @@ const DEMO_BOTS: Bot[] = [
     proxyEnabled: false,
     bandwidthGb: 10,
     port: 3001,
+    subdomain: "music-bot-pro.bothost.app",
   },
   {
     id: "bot2",
@@ -236,6 +239,7 @@ const DEMO_BOTS: Bot[] = [
     proxyEnabled: false,
     bandwidthGb: 5,
     port: 3002,
+    subdomain: "moderatorbot.bothost.app",
   },
   {
     id: "bot3",
@@ -290,8 +294,13 @@ const DEMO_BOTS: Bot[] = [
     proxyEnabled: true,
     bandwidthGb: 20,
     port: 3003,
+    subdomain: "economybot.bothost.app",
   },
 ];
+
+function generateSubdomain(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".bothost.app";
+}
 
 export function BotsProvider({ children }: { children: React.ReactNode }) {
   const [bots, setBots] = useState<Bot[]>(DEMO_BOTS);
@@ -343,6 +352,7 @@ export function BotsProvider({ children }: { children: React.ReactNode }) {
       backups: [],
       webhooks: [],
       cronJobs: [],
+      subdomain: bot.subdomain || generateSubdomain(bot.name),
     };
     setBots((prev) => [...prev, newBot]);
   }, []);
