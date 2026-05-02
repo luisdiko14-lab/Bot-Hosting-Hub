@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "1i-qwns6pI07kZbKFtLOv"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "bothost app icon"
