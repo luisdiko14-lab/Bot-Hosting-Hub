@@ -238,6 +238,33 @@ export default function BotDetailScreen() {
         {/* OVERVIEW TAB */}
         {activeTab === "overview" && (
           <>
+            {/* Subdomain card */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.cardTitleRow}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Subdomain</Text>
+                <View style={[styles.freeBadge, { backgroundColor: colors.success + "22", borderColor: colors.success + "55" }]}>
+                  <Text style={[styles.freeBadgeText, { color: colors.success }]}>FREE</Text>
+                </View>
+              </View>
+              <View style={[styles.subdomainBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Feather name="globe" size={14} color={colors.primary} />
+                <Text style={[styles.subdomainText, { color: colors.foreground }]} selectable numberOfLines={1}>
+                  {(bot as any).subdomain ?? `${bot.name.toLowerCase().replace(/\s+/g, "-")}.bothost.app`}
+                </Text>
+                <TouchableOpacity
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(`https://${(bot as any).subdomain ?? `${bot.name.toLowerCase().replace(/\s+/g, "-")}.bothost.app`}`);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }}
+                >
+                  <Feather name="copy" size={14} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                Your bot's status page is publicly accessible at this URL. SSL included.
+              </Text>
+            </View>
+
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>Bot Info</Text>
               {[
@@ -987,5 +1014,9 @@ const styles = StyleSheet.create({
   metricPill: { flex: 1, padding: 10, borderRadius: 10, alignItems: "center", gap: 2 },
   metricPillVal: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   metricPillLbl: { fontSize: 10, fontFamily: "Inter_400Regular" },
+  freeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, borderWidth: 1 },
+  freeBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  subdomainBox: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, borderWidth: 1 },
+  subdomainText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium" },
   surface: {},
 });

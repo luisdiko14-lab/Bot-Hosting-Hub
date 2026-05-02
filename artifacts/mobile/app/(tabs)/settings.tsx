@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
@@ -13,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useBots } from "@/context/BotsContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -82,6 +84,7 @@ export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { settings, updateSettings } = useSettings();
+  const { bots } = useBots();
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -261,6 +264,56 @@ export default function SettingsScreen() {
         />
       </Section>
 
+      <Section title="DOMAINS" colors={colors}>
+        <View style={[dStyles.domainsNote, { backgroundColor: colors.success + "11", borderColor: colors.success + "33" }]}>
+          <Feather name="globe" size={14} color={colors.success} />
+          <Text style={[dStyles.domainsNoteText, { color: colors.success }]}>
+            All bots get a free .bothost.app subdomain with SSL included
+          </Text>
+        </View>
+        {bots.map((bot) => {
+          const domain = (bot as any).subdomain ?? `${bot.name.toLowerCase().replace(/\s+/g, "-")}.bothost.app`;
+          return (
+            <View key={bot.id} style={[dStyles.domainRow, { borderBottomColor: colors.border }]}>
+              <View style={[dStyles.domainIcon, { backgroundColor: colors.primary + "22" }]}>
+                <Feather name="cpu" size={13} color={colors.primary} />
+              </View>
+              <View style={dStyles.domainInfo}>
+                <Text style={[dStyles.domainName, { color: colors.foreground }]} numberOfLines={1}>{domain}</Text>
+                <Text style={[dStyles.domainBot, { color: colors.mutedForeground }]}>{bot.name}</Text>
+              </View>
+              <View style={[dStyles.sslBadge, { backgroundColor: colors.success + "18" }]}>
+                <Feather name="lock" size={10} color={colors.success} />
+                <Text style={[dStyles.sslText, { color: colors.success }]}>SSL</Text>
+              </View>
+              <TouchableOpacity
+                onPress={async () => {
+                  await Clipboard.setStringAsync(`https://${domain}`);
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }}
+              >
+                <Feather name="copy" size={14} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+        {bots.length === 0 && (
+          <View style={dStyles.noBotsRow}>
+            <Text style={[dStyles.noBots, { color: colors.mutedForeground }]}>Create a bot to get your free subdomain</Text>
+          </View>
+        )}
+        <SettingRow
+          icon="plus-circle"
+          label="Add Custom Domain"
+          sub="Connect your own domain — Pro plan"
+          onPress={() => Alert.alert("Custom Domains", "Custom domain support is available on the Pro plan.\n\nUpgrade to add domains like bot.yoursite.com", [
+            { text: "Upgrade to Pro", onPress: () => { updateSettings({ plan: "pro" }); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } },
+            { text: "Cancel", style: "cancel" },
+          ])}
+          colors={colors}
+        />
+      </Section>
+
       <Section title="PLAN & BILLING" colors={colors}>
         <SettingRow
           icon="credit-card"
@@ -356,6 +409,20 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
+
+const dStyles = StyleSheet.create({
+  domainsNote: { flexDirection: "row", alignItems: "center", gap: 8, margin: 12, padding: 10, borderRadius: 8, borderWidth: 1 },
+  domainsNoteText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  domainRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, gap: 10 },
+  domainIcon: { width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  domainInfo: { flex: 1 },
+  domainName: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  domainBot: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  sslBadge: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 5 },
+  sslText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  noBotsRow: { padding: 14 },
+  noBots: { fontSize: 12, fontFamily: "Inter_400Regular" },
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
