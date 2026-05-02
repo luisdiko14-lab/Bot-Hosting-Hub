@@ -18,6 +18,7 @@ import { MetricBar } from "@/components/MetricBar";
 import { SparklineChart } from "@/components/SparklineChart";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useBots, type CpuCores, type EnvVar, type RamTier } from "@/context/BotsContext";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useColors } from "@/hooks/useColors";
 
 function formatUptime(seconds: number): string {
@@ -50,6 +51,7 @@ export default function BotDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { simulateCrash } = useNotifications();
   const {
     bots,
     startBot,
@@ -206,6 +208,26 @@ export default function BotDetailScreen() {
           <Text style={[styles.ctrlText, { color: bot.maintenanceMode ? colors.warning : colors.mutedForeground }]}>
             Maint.
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.ctrlBtn, { backgroundColor: colors.destructive + "18" }]}
+          onPress={() => {
+            Alert.alert(
+              "Simulate Crash",
+              `Force a random crash on "${bot.name}" to test the alert system?`,
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Crash It",
+                  style: "destructive",
+                  onPress: () => simulateCrash(bot.id),
+                },
+              ]
+            );
+          }}
+        >
+          <Feather name="zap-off" size={16} color={colors.destructive} />
+          <Text style={[styles.ctrlText, { color: colors.destructive }]}>Crash</Text>
         </TouchableOpacity>
       </View>
 

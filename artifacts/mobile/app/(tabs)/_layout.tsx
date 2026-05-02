@@ -5,7 +5,8 @@ import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, Text, View, useColorScheme } from "react-native";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useColors } from "@/hooks/useColors";
 
 function NativeTabLayout() {
@@ -35,9 +36,19 @@ function NativeTabLayout() {
   );
 }
 
+function CrashBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <View style={badge.wrap}>
+      <Text style={badge.text}>{count > 9 ? "9+" : count}</Text>
+    </View>
+  );
+}
+
 function ClassicTabLayout() {
   const colors = useColors();
   const colorScheme = useColorScheme();
+  const { unreadCount } = useNotifications();
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
@@ -85,12 +96,16 @@ function ClassicTabLayout() {
         name="bots"
         options={{
           title: "Bots",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="cpu" tintColor={color} size={22} />
-            ) : (
-              <Feather name="cpu" size={20} color={color} />
-            ),
+          tabBarIcon: ({ color }) => (
+            <View>
+              {isIOS ? (
+                <SymbolView name="cpu" tintColor={color} size={22} />
+              ) : (
+                <Feather name="cpu" size={20} color={color} />
+              )}
+              <CrashBadge count={unreadCount} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
@@ -132,6 +147,24 @@ function ClassicTabLayout() {
     </Tabs>
   );
 }
+
+const badge = StyleSheet.create({
+  wrap: {
+    position: "absolute",
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#da373c",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    borderWidth: 2,
+    borderColor: "#1e2124",
+  },
+  text: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#fff" },
+});
 
 export default function TabLayout() {
   if (isLiquidGlassAvailable()) {

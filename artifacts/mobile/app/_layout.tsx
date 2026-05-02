@@ -13,8 +13,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { CrashAlertBanner } from "@/components/CrashAlertBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BotsProvider } from "@/context/BotsContext";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -63,11 +65,14 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <SettingsProvider>
             <BotsProvider>
-              <GestureHandlerRootView>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
+              <NotificationsProvider>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                    <CrashAlertBanner />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </NotificationsProvider>
             </BotsProvider>
           </SettingsProvider>
         </QueryClientProvider>
