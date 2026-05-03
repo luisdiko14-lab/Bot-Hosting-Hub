@@ -8,6 +8,10 @@ import React, {
 } from "react";
 import { useBots } from "@/context/BotsContext";
 import { useSettings } from "@/context/SettingsContext";
+import {
+  requestNotificationPermissions,
+  sendCrashPushNotification,
+} from "@/utils/pushNotifications";
 
 export type CrashReason =
   | "ram_exceeded"
@@ -31,10 +35,12 @@ export interface CrashNotification {
 interface NotificationsContextType {
   notifications: CrashNotification[];
   unreadCount: number;
+  pushEnabled: boolean;
   dismiss: (id: string) => void;
   dismissAll: () => void;
   restartFromNotification: (id: string) => void;
   simulateCrash: (botId: string) => void;
+  requestPush: () => Promise<boolean>;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | null>(null);
@@ -63,6 +69,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { bots, updateBot, addLog, startBot } = useBots();
   const { settings } = useSettings();
   const [notifications, setNotifications] = useState<CrashNotification[]>([]);
+  const [pushEnabled, setPushEnabled] = useState(false);
+
+  // Request push permission on mount
+  useEffect(() => {
+    requestNotificationPermissions().then(setPushEnabled);
+  }, []);
 
   // Track when each bot last crashed so we don't spam
   const lastCrashTime = useRef<Record<string, number>>({});
@@ -90,6 +102,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // Add crash log
       addLog(botId, "error", `[CRASH] ${detail}`);
       addLog(botId, "error", `Process exited unexpectedly — auto-restart ${bot.autoRestart ? "queued" : "disabled"}`);
+
+      // Fire real OS push notification
+      sendCrashPushNotification(bot.name, reason, detail);
 
       // If auto-restart is on, restart after 5 seconds
       if (bot.autoRestart) {
@@ -211,6 +226,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     [crashBot]
   );
 
+  const requestPush = useCallback(async () => {
+    const granted = await requestNotificationPermissions();
+    setPushEnabled(granted);
+    return granted;
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.dismissed).length;
 
   return (
@@ -218,10 +239,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       value={{
         notifications,
         unreadCount,
+        pushEnabled,
         dismiss,
         dismissAll,
         restartFromNotification,
         simulateCrash,
+        requestPush,
       }}
     >
       {children}

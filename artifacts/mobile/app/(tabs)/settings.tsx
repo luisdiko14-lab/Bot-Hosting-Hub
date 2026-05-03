@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBots } from "@/context/BotsContext";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useSettings } from "@/context/SettingsContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -85,6 +86,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings } = useSettings();
   const { bots } = useBots();
+  const { pushEnabled, requestPush } = useNotifications();
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -158,8 +160,28 @@ export default function SettingsScreen() {
         <SettingRow
           icon="bell"
           label="Push Notifications"
-          toggle={settings.notifications}
-          onToggle={(v) => updateSettings({ notifications: v })}
+          sub={
+            Platform.OS === "web"
+              ? "Available on iOS & Android"
+              : pushEnabled
+              ? "OS notifications enabled"
+              : "Tap to grant permission"
+          }
+          toggle={settings.notifications && (Platform.OS === "web" || pushEnabled)}
+          onToggle={async (v) => {
+            if (v && !pushEnabled && Platform.OS !== "web") {
+              const granted = await requestPush();
+              if (!granted) {
+                Alert.alert(
+                  "Permission Required",
+                  "Enable notifications in your device Settings to receive crash alerts.",
+                  [{ text: "OK" }]
+                );
+                return;
+              }
+            }
+            updateSettings({ notifications: v });
+          }}
           colors={colors}
         />
         <SettingRow
