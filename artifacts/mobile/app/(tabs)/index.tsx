@@ -16,6 +16,7 @@ import { MetricBar } from "@/components/MetricBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useBots } from "@/context/BotsContext";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useColors } from "@/hooks/useColors";
 
 function formatUptime(seconds: number): string {
@@ -30,6 +31,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { bots, totalBots, onlineBots, totalRamUsedMb, startBot, stopBot } = useBots();
+  const { unreadCount } = useNotifications();
   const [refreshing, setRefreshing] = React.useState(false);
 
   const totalRamMb = bots.reduce((s, b) => s + b.ramMb, 0);
@@ -70,12 +72,25 @@ export default function DashboardScreen() {
           <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Welcome back</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>Dashboard</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: colors.primary }]}
-          onPress={() => router.push("/create-bot")}
-        >
-          <Feather name="plus" size={20} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.bellBtn, { backgroundColor: colors.card }]}
+            onPress={() => router.push("/alerts")}
+          >
+            <Feather name="bell" size={19} color={unreadCount > 0 ? "#da373c" : colors.mutedForeground} />
+            {unreadCount > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/create-bot")}
+          >
+            <Feather name="plus" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.statsGrid}>
@@ -219,6 +234,27 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   greeting: { fontSize: 12, fontFamily: "Inter_400Regular" },
   title: { fontSize: 24, fontFamily: "Inter_700Bold" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bellBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#da373c",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  bellBadgeText: { fontSize: 8, fontFamily: "Inter_700Bold", color: "#fff" },
   addBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   statsGrid: { flexDirection: "row", gap: 12 },
   card: { borderRadius: 14, padding: 16, borderWidth: 1, gap: 14 },

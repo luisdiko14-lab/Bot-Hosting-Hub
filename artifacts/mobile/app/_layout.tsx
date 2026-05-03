@@ -39,6 +39,10 @@ function RootLayoutNav() {
         name="bot/file-editor"
         options={{ headerShown: false, presentation: "modal" }}
       />
+      <Stack.Screen
+        name="alerts"
+        options={{ headerShown: false, presentation: "modal" }}
+      />
     </Stack>
   );
 }
